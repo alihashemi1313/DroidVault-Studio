@@ -22,11 +22,11 @@ jobs:
             build_script: |
               pip install pyinstaller pillow customtkinter
               pyinstaller --noconsole --onefile --icon="app_icon.ico" --add-data "app_icon.png;." --add-data "app_icon.ico;." --collect-all customtkinter --collect-all PIL main.py --name "DroidVault-Studio"
-              mkdir bundle
-              move dist\DroidVault-Studio.exe bundle\
-              copy README.md bundle\
-              copy LICENSE bundle\
-              powershell Compress-Archive -Path bundle\* -DestinationPath DroidVault-Studio-Windows-x64.zip
+              mkdir -p bundle
+              mv dist/DroidVault-Studio.exe bundle/
+              cp README.md bundle/
+              cp LICENSE bundle/
+              powershell -Command "Compress-Archive -Path 'bundle/*' -DestinationPath 'DroidVault-Studio-Windows-x64.zip'"
 
           - os: ubuntu-latest
             artifact_name: DroidVault-Studio-Linux-x64.tar.gz
@@ -34,7 +34,7 @@ jobs:
               sudo apt-get update && sudo apt-get install -y python3-tk binutils
               pip install pyinstaller pillow customtkinter
               pyinstaller --noconsole --onefile --add-data "app_icon.png:." --collect-all customtkinter --collect-all PIL --hidden-import "PIL._tkinter_finder" main.py --name "DroidVault-Studio"
-              mkdir bundle
+              mkdir -p bundle
               chmod +x dist/DroidVault-Studio
               cp dist/DroidVault-Studio bundle/
               cp README.md bundle/
@@ -57,11 +57,7 @@ jobs:
       - name: Compute SHA-256 Checksum
         shell: bash
         run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            certutil -hashfile ${{ matrix.artifact_name }} SHA256 | findstr /v ":" > ${{ matrix.artifact_name }}.sha256
-          else
-            sha256sum ${{ matrix.artifact_name }} > ${{ matrix.artifact_name }}.sha256
-          fi
+          sha256sum ${{ matrix.artifact_name }} > ${{ matrix.artifact_name }}.sha256
 
       - name: Upload Artifact to Workflow
         uses: actions/upload-artifact@v4
