@@ -15,6 +15,8 @@ from collections import OrderedDict
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+import tkinter.messagebox as mbox
+
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 
@@ -438,7 +440,6 @@ class StudioTable(ctk.CTkFrame):
                     img = get_styled_row_icon(key, key in self.checked_keys, it.get("is_system", False), self.current_mode)
                     self._tree_images[key] = img
                 self.tree.item(key, values=vals, image=img)
-
 
 # ---------------------------------------------------------------------------
 # Main App
@@ -1660,13 +1661,33 @@ class App(ctk.CTk):
     def _debloat_unfreeze(self):
         self._run_debloat_action("Unfreeze", adbu.unfreeze_package, success_status="Active")
 
+    def confirm_dangerous_action(self, action_name, target_name, risk_warning):
+        """Display an explicit warning dialog before executing sensitive and hazardous operations."""
+        title = f"⚠️ High-Risk Action: {action_name}"
+        msg = (
+            f"You are about to execute a privileged operation on:\n\n"
+            f"Target: {target_name}\n\n"
+            f"Risk:\n{risk_warning}\n\n"
+            f"Are you sure you want to proceed?"
+        )
+        return mbox.askyesno(title, msg, icon="warning", parent=self)
+    
     def _debloat_uninstall(self):
         keys = list(self.debloater_table.checked_keys)
         if not keys:
             messagebox.showwarning("Notice", "No packages selected.")
             return
-        if not messagebox.askyesno("Confirm", f"Uninstall {len(keys)} packages for user 0?"):
+
+        preview_pkgs = ", ".join(keys[:4]) + (f" ... and {len(keys) - 4} more" if len(keys) > 4 else "")
+        risk_text = (
+            "Removing system packages (user 0) can break core system features, "
+            "trigger UI crashes, or lead to soft bootloops on vendor ROMs.\n"
+            "Keep in mind that some packages cannot be safely re-installed without a factory reset."
+        )
+
+        if not self.confirm_dangerous_action("Uninstall System Packages (User 0)", f"{len(keys)} package(s):\n{preview_pkgs}", risk_text):
             return
+
         self._run_debloat_action("Uninstall", adbu.uninstall_package_user0, refresh_after=True)
 
     # ------------------------------------------------------------------
@@ -1678,6 +1699,11 @@ class App(ctk.CTk):
         if not self.is_rooted:
             messagebox.showerror("Root Required", "Dumping boot.img requires root access.")
             return
+
+        warn = "Reading raw block partitions touches kernel storage tables directly."
+        if not confirm_dangerous_action(self, "Boot Partition Dump", "Kernel Boot Block (/dev/block/.../boot)", warn):
+            return
+
         dest = filedialog.asksaveasfilename(defaultextension=".img", filetypes=[("Boot Image", "*.img")])
         if not dest:
             return
