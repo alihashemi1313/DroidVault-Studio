@@ -1,6 +1,7 @@
 # tests/test_safety_and_rollback.py
-import os
 import io
+import json
+import os
 import sys
 import tarfile
 import tempfile
@@ -14,10 +15,10 @@ import adb_utils as adbu
 
 
 class TestSecurityAndPathValidation(unittest.TestCase):
-    """تست اعتبارسنجی اسامی فایل‌ها در برابر حملات Path Traversal"""
+    """File name validation test against path traversal attacks"""
 
     def test_safe_member_name_blocking_traversal(self):
-        # بررسی جلوگیری از دسترسی به مسیرهای خارج از دایرکتوری
+        # Checking for access prevention to paths outside the directory
         self.assertFalse(adbu._safe_member_name("../evil.sh"))
         self.assertFalse(adbu._safe_member_name("dir/../../etc/passwd"))
         self.assertFalse(adbu._safe_member_name("/system/bin/sh"))
@@ -26,7 +27,7 @@ class TestSecurityAndPathValidation(unittest.TestCase):
         self.assertFalse(adbu._safe_member_name(""))
 
     def test_safe_member_name_expected_top(self):
-        # بررسی تطابق دایرکتوری ریشه
+        # Root Directory Consistency Check
         self.assertTrue(adbu._safe_member_name("com.myapp/databases/db.sqlite", expected_top="com.myapp"))
         self.assertFalse(adbu._safe_member_name("com.otherapp/data.txt", expected_top="com.myapp"))
 
@@ -36,7 +37,7 @@ class TestSecurityAndPathValidation(unittest.TestCase):
 
 
 class TestArchiveIntegrityValidation(unittest.TestCase):
-    """تست ارزیابی سلامت و ایمنی ساختار آرشیو قبل از بازگردانی"""
+    """Health and safety assessment test of the archive structure prior to restoration"""
 
     def setUp(self):
         self.test_dir = tempfile.TemporaryDirectory()
@@ -78,7 +79,7 @@ class TestArchiveIntegrityValidation(unittest.TestCase):
 
 
 class TestAtomicOperationsAndFailureInjection(unittest.TestCase):
-    """تست شبیه‌سازی شکست و اطمینان از پاک‌سازی فایل‌های موقت (.part)"""
+    """Failure simulation test and verification of temporary file (.part) cleanup."""
 
     def setUp(self):
         self.test_dir = tempfile.TemporaryDirectory()
@@ -88,7 +89,7 @@ class TestAtomicOperationsAndFailureInjection(unittest.TestCase):
 
     @patch("subprocess.Popen")
     def test_stream_tar_pull_cleans_up_part_file_on_error(self, mock_popen):
-        # شبیه‌سازی رخ دادن خطا و شکست در حین استریم
+        # Simulating Errors and Failures During Streaming
         mock_proc = MagicMock()
         mock_proc.poll.return_value = 1
         mock_proc.returncode = 1
@@ -120,6 +121,81 @@ class TestAtomicOperationsAndFailureInjection(unittest.TestCase):
             f.write(b"!")
         self.assertNotEqual(digest, adbu.calculate_sha256(sample_file))
 
+class TestRollbackAndRecoveryMechanism(unittest.TestCase):
+    """تست اعتبارسنجی عملیات بازگشت تراکنش (Rollback) در شرایط قطعی ناگهانی"""
+
+    @patch("adb_utils.list_dir")
+    @patch("adb_utils.adb_shell")
+    @patch("adb_utils.path_exists")
+    def test_stale_storage_rollback_restores_original_file(self, mock_exists, mock_shell, mock_list):
+        # محتوای دایرکتوری موقت
+        mock_list.return_value = ["txn_001.json"]
+
+        def shell_side_effect(serial, cmd, **kwargs):
+            res = MagicMock()
+            res.returncode = 0
+
+            # اولویت اول: خواندن فایل ژورنال
+            if cmd.startswith("cat "):
+                res.stdout = json.dumps({
+                    "target": "/sdcard/Documents/notes.txt",
+                    "rollback": "/sdcard/Documents/notes.txt.droidvault_rollback_12345",
+                    "old_exists": True
+                })
+                return res
+
+            # اولویت دوم: پیدا کردن پوشه موقت در اسکن اولیه دیسک
+            if "NOW=$(date" in cmd or cmd.startswith("ROOT="):
+                res.stdout = "/sdcard/.droidvault_tmp_12345\n"
+                return res
+
+            res.stdout = ""
+            return res
+
+        mock_shell.side_effect = shell_side_effect
+
+        # فرض: فایل اصلی قطع/حذف شده، ولی فایل رول‌بک موجود است
+        mock_exists.side_effect = lambda serial, p, **kw: "rollback" in p
+
+        recovered = adbu.cleanup_stale_storage_temp("emulator-5554", "/sdcard")
+
+        # بررسی اینکه فایل اصلی به مسیر درست بازگردانی شده است
+        self.assertIn("/sdcard/Documents/notes.txt", recovered)
+
+
+class TestAndroidSymlinkSecurity(unittest.TestCase):
+    """تست ایمنی سیم‌لینک‌های خاص سیستم‌عامل اندروید"""
+
+    def setUp(self):
+        self.test_dir = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.test_dir.cleanup()
+
+    def test_accept_valid_android_lib_symlink(self):
+        # سیم‌لینک مجاز اندروید به پوشه نصب اپلیکیشن
+        valid_tar = os.path.join(self.test_dir.name, "app_with_lib.tar.gz")
+        with tarfile.open(valid_tar, "w:gz") as tf:
+            ti = tarfile.TarInfo(name="com.test.app/lib")
+            ti.type = tarfile.SYMTYPE
+            ti.linkname = "/data/app/~~xyz==/com.test.app-1/lib/arm64"
+            tf.addfile(ti)
+
+        ok, reason = adbu.validate_local_tar_archive(valid_tar, expected_top="com.test.app")
+        self.assertTrue(ok, f"Valid lib symlink was wrongly rejected: {reason}")
+
+    def test_reject_arbitrary_host_symlink(self):
+        # تلاش برای ساخت سیم‌لینک به فایل‌های حساس لینوکسی/اندرویدی
+        malicious_tar = os.path.join(self.test_dir.name, "malicious_symlink.tar.gz")
+        with tarfile.open(malicious_tar, "w:gz") as tf:
+            ti = tarfile.TarInfo(name="com.test.app/databases/leak")
+            ti.type = tarfile.SYMTYPE
+            ti.linkname = "/data/system/users/0/settings_secure.xml"
+            tf.addfile(ti)
+
+        ok, reason = adbu.validate_local_tar_archive(malicious_tar, expected_top="com.test.app")
+        self.assertFalse(ok)
+        self.assertIn("unsafe link target", reason)
 
 if __name__ == "__main__":
     unittest.main()
