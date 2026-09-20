@@ -1571,10 +1571,20 @@ class App(ctk.CTk):
         items = []
         for p in self.packages:
             pkg = p["package"]
-            preset = adbu.BLOATWARE_PRESETS.get(pkg, {})
-            vendor = preset.get("vendor", "System / Other")
-            level = preset.get("level", "Safe" if not p["is_system"] else "Caution")
-            desc = preset.get("desc", "System Component" if p["is_system"] else "User Application")
+            preset = adbu.BLOATWARE_PRESETS.get(pkg)
+            is_sys = p.get("is_system", False)
+
+            if preset:
+                vendor = preset.get("vendor", "OEM / Known")
+                level = preset.get("level", "Safe")
+                desc = preset.get("desc", "Known pre-installed package")
+                is_known_bloat = True
+            else:
+                vendor = "System" if is_sys else "User App"
+                level = "Caution" if is_sys else "User App"
+                desc = "Unverified system component" if is_sys else "User-installed application"
+                is_known_bloat = False
+
             st = "Frozen" if p.get("is_disabled") else "Active"
             items.append({
                 "key": pkg,
@@ -1583,6 +1593,8 @@ class App(ctk.CTk):
                 "level": level,
                 "desc": desc,
                 "status": st,
+                "is_system": is_sys,
+                "is_known_bloat": is_known_bloat,
             })
         valid_keys = {it["key"] for it in items}
         self.debloater_table.checked_keys.intersection_update(valid_keys)
@@ -1591,11 +1603,11 @@ class App(ctk.CTk):
     def _select_safe_bloat(self):
         count = 0
         for k, it in self.debloater_table.items.items():
-            if it.get("level") in ("Safe", "Recommended"):
+            if it.get("is_known_bloat") and it.get("level") in ("Safe", "Recommended"):
                 self.debloater_table.checked_keys.add(k)
                 self.debloater_table.refresh_row_icon(k)
                 count += 1
-        messagebox.showinfo("Selected", f"Selected {count} bloatware packages.")
+        messagebox.showinfo("Selected", f"Selected {count} verified bloatware packages.")
 
     def _run_debloat_action(self, label, func, success_status=None, refresh_after=False):
         if not self.serial:
@@ -1700,8 +1712,11 @@ class App(ctk.CTk):
             messagebox.showerror("Root Required", "Dumping boot.img requires root access.")
             return
 
-        warn = "Reading raw block partitions touches kernel storage tables directly."
-        if not self.confirm_dangerous_action(self, "Boot Partition Dump", "Kernel Boot Block (/dev/block/.../boot)", warn):
+        warn = (
+            "Direct block-level dumping reads raw kernel flash storage.\n"
+            "Ensure target drive has at least 128 MB free."
+        )
+        if not self.confirm_dangerous_action("Boot Partition Dump", "Kernel Boot Block (/dev/block/.../boot)", warn):
             return
 
         dest = filedialog.asksaveasfilename(defaultextension=".img", filetypes=[("Boot Image", "*.img")])
