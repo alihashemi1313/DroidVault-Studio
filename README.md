@@ -1,4 +1,5 @@
-
+<div align="center">
+   
 # ⚡ DroidVault Studio
 
 ### Universal Android Management Suite
@@ -14,11 +15,11 @@
 ![Status](https://img.shields.io/badge/Status-Active-10B981)
 [![CI & Safety Verification](https://github.com/alihashemi1313/DroidVault-Studio/actions/workflows/ci.yaml/badge.svg)](https://github.com/alihashemi1313/DroidVault-Studio/actions/workflows/ci.yaml)
 
-</div>
-
 <br/>
 
 <img src="assets/backup_tab_connected.png" alt="DroidVault Studio Interface" width="800">
+
+</div>
 
 ---
 
