@@ -264,7 +264,6 @@ def _backup_one_app(serial, pkg_info, apps_dir, options, log, speed_cb=None,
     return entry
 
 
-# جایگزین تابع _find_active_database_folder در backup_manager_2.py
 def _find_active_database_folder(serial, candidate_paths):
     """Find the provider DB directory by checking direct file existence reliably."""
     for candidate in candidate_paths:
