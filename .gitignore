@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+cache/
+*.part
+*.tmp
+config.json
+scrcpy*/
+*.img
+*.tar.gz
+*.tar.zst
