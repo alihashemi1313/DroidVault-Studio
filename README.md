@@ -107,7 +107,7 @@ Download the latest standalone package directly from [Releases](https://github.c
 
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/](https://github.com/alihashemi1313/DroidVault-Studio.git)
+   git clone https://github.com/alihashemi1313/DroidVault-Studio.git
    cd DroidVault-Studio
    ```
 2. Install dependencies:
