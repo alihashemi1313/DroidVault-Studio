@@ -1,4 +1,4 @@
-<div align="center">
+<img width="1282" height="842" alt="backup_tab_connected" src="https://github.com/user-attachments/assets/87767271-7e25-4e21-bdc9-276845aa7ede" /><div align="center">
 
 # ⚡ DroidVault Studio
 
@@ -15,6 +15,10 @@
 ![Status](https://img.shields.io/badge/Status-Active-10B981)
 
 </div>
+
+<br/>
+
+<img src="assets/backup_tab_connected.png" alt="DroidVault Studio Interface" width="800">
 
 ---
 
@@ -102,8 +106,8 @@ Download the latest standalone package directly from [Releases](https://github.c
 
 1. Clone the repository:
    ```bash
-   git clone [https://github.com/](https://github.com/)<نام_کاربری>/<نام_ریپازیتوری>.git
-   cd <نام_ریپازیتوری>
+   git clone [https://github.com/](https://github.com/alihashemi1313/DroidVault-Studio.git)
+   cd DroidVault-Studio
    ```
 2. Install dependencies:
    ```bash
