@@ -328,8 +328,7 @@ The affected app is automatically rolled back to its prior state — either imme
 
 ## 📄 License
 
-*(Add your preferred license here — e.g. MIT, GPL-3.0, or "All rights reserved".)*
-
+This project is released under the **GNU General Public License v3.0**. Please consult the [LICENSE](LICENSE) file for details and the full text of the license.
 ---
 
 <div align="center">
