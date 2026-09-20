@@ -12,7 +12,7 @@
 [![Root](https://img.shields.io/badge/Root-Optional%20%28App%20Data%20Only%29-amber.svg)](#-requirements)
 ![UI](https://img.shields.io/badge/UI-CustomTkinter-6366F1)
 ![Status](https://img.shields.io/badge/Status-Active-10B981)
-[![CI](https://github.com/alihashemi1313/DroidVault-Studio/actions/workflows/ci.yml/badge.svg)](https://github.com/alihashemi1313/DroidVault-Studio/workflows/ci.yml)
+[![CI & Safety Verification](https://github.com/alihashemi1313/DroidVault-Studio/actions/workflows/ci.yaml/badge.svg)](https://github.com/alihashemi1313/DroidVault-Studio/actions/workflows/ci.yaml)
 
 </div>
 
