@@ -1,2 +1,6 @@
 customtkinter==5.2.2
-Pillow>=10.0.0
+Pillow>=10.2.0,<11.0.0
+
+# Development & Testing dependencies
+pytest>=8.0.0
+pytest-mock>=3.12.0
