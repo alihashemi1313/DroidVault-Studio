@@ -1,4 +1,4 @@
-<div align="center">
+<img width="1282" height="842" alt="backup_tab_connected" src="https://github.com/user-attachments/assets/87767271-7e25-4e21-bdc9-276845aa7ede" /><div align="center">
 
 # ⚡ DroidVault Studio
 
@@ -6,26 +6,31 @@
 
 **Backup • Restore • Debloat • Mod — all on your PC, nothing left behind on your phone.**
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-informational)
-![Root Required](https://img.shields.io/badge/Root-Required-critical)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-brightgreen.svg)](#downloads)
+[![Release](https://img.shields.io/github/v/release/alihashemi1313/DroidVault-Studio.svg)](https://github.com/alihashemi1313/DroidVault-Studio/releases/latest)
+[![Root](https://img.shields.io/badge/Root-Optional%20%28App%20Data%20Only%29-amber.svg)](#-requirements)
 ![UI](https://img.shields.io/badge/UI-CustomTkinter-6366F1)
 ![Status](https://img.shields.io/badge/Status-Active-10B981)
 
 </div>
 
+<br/>
+
+<img src="assets/backup_tab_connected.png" alt="DroidVault Studio Interface" width="800">
+
 ---
 
-> [!CAUTION]
-> **This tool requires root access and performs low-level operations on your device** — installing/uninstalling packages, overwriting app data, freezing system components, and (optionally) dumping the boot partition. These are powerful operations. Read the [🛡️ Safety & Architecture](#️-safety--architecture) and [⚠️ Cautions & Limitations](#️-cautions--known-limitations) sections before your first real backup/restore. **You are responsible for your own device.**
-
+> [!NOTE]
+> **Root is optional:** APK extraction, internal storage transfer, system debloating, screen mirroring, and Wireless ADB operate without root. Root access (Magisk, KernelSU, or APatch) is strictly required only for full application data (`/data/data`), system databases (SMS/Contacts), and the Modder's Toolkit.
 ---
 
 ## 📚 Table of Contents
 
 1. [✨ Features](#-features)
 2. [📋 Requirements](#-requirements)
-3. [⚙️ Installation](#️-installation)
+3. [⚙️ Installation & Downloads](#️-installation)
 4. [🔑 First-Time Setup — Granting Root Access](#-first-time-setup--granting-root-access)
 5. [🚀 Usage Guide](#-usage-guide)
    - [📦 Backup Studio](#-backup-studio)
@@ -86,25 +91,29 @@ sudo dnf install python3-tkinter # Fedora
 
 ---
 
-## ⚙️ Installation
+## ⚙️ Installation & Downloads
 
-1. **Install Python 3.9+** from [python.org](https://www.python.org/) (Windows/macOS installers include Tkinter automatically).
-2. **Install the required Python packages:**
+### 🚀 Method 1: Pre-built Binaries (Recommended — No Python needed)
+
+Download the latest standalone package directly from [Releases](https://github.com/alihashemi1313/DroidVault-Studio/releases/latest):
+
+- **Windows 10 / 11:** Download `DroidVault-Studio-v2.5-Windows-x64.zip`, extract it anywhere, and launch `DroidVault-Studio.exe`. (ADB, Scrcpy, and all GUI runtimes are bundled).
+- **Linux:** Download `DroidVault-Studio-v2.5-Linux-x64.tar.gz`, extract it, and run `./DroidVault-Studio` (ensure `adb` and `scrcpy` are installed via your package manager).
+
+---
+
+### 🛠️ Method 2: Run from Source (Developers)
+
+1. Clone the repository:
    ```bash
-   pip install customtkinter pillow
+   git clone [https://github.com/](https://github.com/alihashemi1313/DroidVault-Studio.git)
+   cd DroidVault-Studio
    ```
-3. **Install Android Platform Tools** (provides `adb`):
-   - Download from the [official Android developer site](https://developer.android.com/tools/releases/platform-tools).
-   - Unzip it somewhere permanent (e.g. `C:\platform-tools` or `~/platform-tools`).
-   - Add that folder to your system `PATH`, **or** skip this and set the `ADB_PATH` environment variable to the full path of the `adb` executable instead.
-4. **Download the four project files** into one folder:
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
    ```
-   main.py
-   adb_utils.py
-   backup_manager.py
-   restore_manager.py
-   ```
-5. **Run it:**
+3. Run the application:
    ```bash
    python main.py
    ```
