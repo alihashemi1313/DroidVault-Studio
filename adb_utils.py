@@ -25,8 +25,6 @@ from PIL import Image
 
 POPEN_FLAGS = subprocess.CREATE_NO_WINDOW if sys.platform.startswith("win") else 0
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
 COMMAND_TIMEOUT = 30
 INSTALL_TIMEOUT = 300
 TRANSFER_IDLE_TIMEOUT = 120
@@ -37,35 +35,67 @@ DEVICE_LOCK_PATH = "/data/local/tmp/droidvault_operation.lock"
 _ACTIVE_PROCESSES = {}
 _ACTIVE_PROCESSES_LOCK = threading.Lock()
 
+# Global PATH Variables
+ADB_PATH = "adb"
+SCRCPY_PATH = "scrcpy"
+_FOUND_SCRCPY = None
+_FOUND_ADB = None
+
 
 def _find_scrcpy_and_adb():
-    scrcpy_exe = None
-    adb_exe = None
-    try:
-        for item in os.listdir(SCRIPT_DIR):
-            full_sub = os.path.join(SCRIPT_DIR, item)
-            if os.path.isdir(full_sub) and "scrcpy" in item.lower():
-                cand_s = os.path.join(full_sub, "scrcpy.exe")
-                cand_a = os.path.join(full_sub, "adb.exe")
-                if os.path.isfile(cand_s) and not scrcpy_exe:
-                    scrcpy_exe = os.path.abspath(cand_s)
-                if os.path.isfile(cand_a) and not adb_exe:
-                    adb_exe = os.path.abspath(cand_a)
-    except Exception:
-        pass
+    global ADB_PATH, SCRCPY_PATH, _FOUND_SCRCPY, _FOUND_ADB
 
-    cand_s = os.path.join(SCRIPT_DIR, "scrcpy.exe")
-    cand_a = os.path.join(SCRIPT_DIR, "adb.exe")
-    if os.path.isfile(cand_s) and not scrcpy_exe:
-        scrcpy_exe = os.path.abspath(cand_s)
-    if os.path.isfile(cand_a) and not adb_exe:
-        adb_exe = os.path.abspath(cand_a)
-    return scrcpy_exe, adb_exe
+    is_win = sys.platform.startswith("win")
+    adb_bin = "adb.exe" if is_win else "adb"
+    scrcpy_bin = "scrcpy.exe" if is_win else "scrcpy"
+
+    found_scrcpy_path = None
+    found_adb_path = None
+
+    # 1. Checking local paths relative to the executable or PyInstaller bundle
+    candidate_dirs = [
+        SCRIPT_DIR,
+        os.path.join(SCRIPT_DIR, "scrcpy-win64-v4.1"),
+        os.path.join(SCRIPT_DIR, "platform-tools"),
+    ]
+
+    for d in candidate_dirs:
+        adb_candidate = os.path.join(d, adb_bin)
+        scrcpy_candidate = os.path.join(d, scrcpy_bin)
+
+        if (
+            not found_adb_path
+            and os.path.isfile(adb_candidate)
+            and (is_win or os.access(adb_candidate, os.X_OK))
+        ):
+            found_adb_path = adb_candidate
+
+        if (
+            not found_scrcpy_path
+            and os.path.isfile(scrcpy_candidate)
+            and (is_win or os.access(scrcpy_candidate, os.X_OK))
+        ):
+            found_scrcpy_path = scrcpy_candidate
+
+    # 2. Checking System Variables (PATH)
+    if not found_adb_path:
+        found_adb_path = shutil.which(adb_bin)
+
+    if not found_scrcpy_path:
+        found_scrcpy_path = shutil.which(scrcpy_bin)
+
+    # Configuring Global Variables
+    _FOUND_ADB = found_adb_path
+    _FOUND_SCRCPY = found_scrcpy_path
+
+    ADB_PATH = found_adb_path if found_adb_path else adb_bin
+    SCRCPY_PATH = found_scrcpy_path if found_scrcpy_path else scrcpy_bin
+
+    return _FOUND_SCRCPY, _FOUND_ADB
 
 
+# Called during module import to finalize variable preparation
 _FOUND_SCRCPY, _FOUND_ADB = _find_scrcpy_and_adb()
-ADB_PATH = os.environ.get("ADB_PATH") or _FOUND_ADB or "adb"
-
 
 def _find_local_zstd():
     env = os.environ.get("ZSTD_PATH")
