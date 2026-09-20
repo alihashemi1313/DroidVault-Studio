@@ -1701,7 +1701,7 @@ class App(ctk.CTk):
             return
 
         warn = "Reading raw block partitions touches kernel storage tables directly."
-        if not confirm_dangerous_action(self, "Boot Partition Dump", "Kernel Boot Block (/dev/block/.../boot)", warn):
+        if not self.confirm_dangerous_action(self, "Boot Partition Dump", "Kernel Boot Block (/dev/block/.../boot)", warn):
             return
 
         dest = filedialog.asksaveasfilename(defaultextension=".img", filetypes=[("Boot Image", "*.img")])
