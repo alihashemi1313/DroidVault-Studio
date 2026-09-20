@@ -71,10 +71,10 @@
 |---|---|
 | 🐍 Python | 3.9 or newer |
 | 📦 Python packages | `customtkinter`, `Pillow` (install below) |
-| 🔌 ADB | Android Platform Tools, with `adb` available on your system `PATH` (or point `ADB_PATH` to it — see below) |
-| 📱 Android device | **Rooted** — Magisk or KernelSU |
+| 🔌 ADB | Android Platform Tools, Bundled with Windows release; Linux users need adb in PATH |
+| 📱 Android device | Non-root for general tasks | Rooted (Magisk / KernelSU) for /data/data backups |
 | 🔗 Connection | USB cable (with USB debugging authorized) or Wireless ADB |
-| 🖱️ Optional | [scrcpy](https://github.com/Genymobile/scrcpy) on your PC, for the Mirror Screen button |
+| 🖱️ Optional | [scrcpy](https://github.com/Genymobile/scrcpy) , for the Mirror Screen button, Bundled with Windows release; optional on Linux |
 
 <details>
 <summary>🐧 Linux users — one extra step</summary>
