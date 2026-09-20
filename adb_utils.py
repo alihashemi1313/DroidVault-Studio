@@ -1,7 +1,14 @@
+import cmd
+import os
+import sys
+if getattr(sys, "frozen", False):
+    SCRIPT_DIR = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
+else:
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 import hashlib
 import io
 import json
-import os
 import queue
 import re
 import shlex
@@ -15,6 +22,8 @@ from collections import deque
 from pathlib import PurePosixPath
 
 from PIL import Image
+
+POPEN_FLAGS = subprocess.CREATE_NO_WINDOW if sys.platform.startswith("win") else 0
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -157,12 +166,12 @@ def _run(args, timeout=None):
             encoding="utf-8",
             errors="replace",
             timeout=timeout,
+            creationflags=POPEN_FLAGS,
         )
     except FileNotFoundError:
         raise AdbError(f"ADB binary not found: {args[0]}")
     except subprocess.TimeoutExpired:
         raise AdbError(f"Command timed out after {timeout}s: {' '.join(args)}")
-
 
 def adb(serial, args, timeout=None, check=True):
     full = [ADB_PATH]
@@ -220,6 +229,7 @@ def _run_process_cancellable(args, serial=None, should_cancel=lambda: False,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             bufsize=0,
+            creationflags=POPEN_FLAGS,
         )
         _register_process(proc, serial)
         t_out = threading.Thread(target=_bounded_reader, args=(proc.stdout, activity, stdout_buf), daemon=True)
@@ -300,7 +310,13 @@ def _capture_process_cancellable(args, serial=None, should_cancel=lambda: False,
     out_lock = threading.Lock()
     start = time.monotonic()
     try:
-        proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
+        proc = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=0,
+            creationflags=POPEN_FLAGS,
+        )
         _register_process(proc, serial)
 
         def reader(pipe, target, is_stdout):
@@ -980,7 +996,7 @@ def stream_tar_pull(serial, remote_base, folder_name, local_dest_tar, use_zstd=F
         last_update = start
         try:
             with open(part_path, "wb") as out:
-                adb_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
+                adb_proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0, creationflags=POPEN_FLAGS)
                 _register_process(adb_proc, serial)
                 zstd_proc = subprocess.Popen(
                     [ZSTD_PATH, "-q", "-T0", "-3", "-c"],
@@ -1273,7 +1289,7 @@ def stream_root_command_to_file(serial, root_command, local_output_path,
     proc = None
     last_data = time.monotonic()
     try:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0, creationflags=POPEN_FLAGS)
         _register_process(proc, serial)
 
         def reader():
@@ -1367,8 +1383,10 @@ def launch_scrcpy(serial, custom_path=None):
         adb_dir = os.path.dirname(os.path.abspath(ADB_PATH))
         env["PATH"] = adb_dir + os.pathsep + env.get("PATH", "")
     try:
-        subprocess.Popen([scrcpy_exe, "-s", serial, "--window-title", f"DroidVault Mirror ({serial})"],
-                         cwd=exe_dir, env=env)
+        subprocess.Popen(
+            [scrcpy_exe, "-s", serial, "--window-title", f"DroidVault Mirror ({serial})"],
+            cwd=exe_dir, env=env, creationflags=POPEN_FLAGS
+        )
         return True, "Scrcpy started successfully."
     except FileNotFoundError:
         return False, "NOT_FOUND"

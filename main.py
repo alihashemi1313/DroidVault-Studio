@@ -1,3 +1,4 @@
+import os
 import sys
 if sys.platform.startswith("win"):
     import ctypes
@@ -7,7 +8,6 @@ if sys.platform.startswith("win"):
         pass
 import json
 import math
-import os
 import re
 import threading
 import time

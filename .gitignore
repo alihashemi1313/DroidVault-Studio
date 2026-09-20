@@ -8,3 +8,12 @@ scrcpy*/
 *.img
 *.tar.gz
 *.tar.zst
+
+# PyInstaller outputs
+build/
+dist/
+*.spec
+
+# IDE & Editor settings
+.vscode/
+.idea/
