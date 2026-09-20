@@ -1,4 +1,3 @@
-<img width="1282" height="842" alt="backup_tab_connected" src="https://github.com/user-attachments/assets/87767271-7e25-4e21-bdc9-276845aa7ede" /><div align="center">
 
 # ⚡ DroidVault Studio
 
