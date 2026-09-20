@@ -1,3 +1,10 @@
+import sys
+if sys.platform.startswith("win"):
+    import ctypes
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("droidvault.studio.app.2.5")
+    except Exception:
+        pass
 import json
 import math
 import os
@@ -438,7 +445,22 @@ class StudioTable(ctk.CTkFrame):
 # ---------------------------------------------------------------------------
 class App(ctk.CTk):
     def __init__(self):
+        
+        def get_asset_path(relative_path):
+            if hasattr(sys, '_MEIPASS'):
+                return os.path.join(sys._MEIPASS, relative_path)
+            return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)
+        
         super().__init__()
+
+        ico_file = get_asset_path("app_icon.ico")
+        png_file = get_asset_path("app_icon.png")
+        
+        if sys.platform.startswith("win") and os.path.exists(ico_file):
+            self.iconbitmap(ico_file)
+        elif os.path.exists(png_file):
+            self._window_icon = ImageTk.PhotoImage(file=png_file)
+            self.iconphoto(True, self._window_icon)
         self.config_data = load_config()
         self.current_mode = self.config_data.get("theme", "Dark")
         ctk.set_appearance_mode(self.current_mode)
@@ -479,7 +501,7 @@ class App(ctk.CTk):
         self._switch_studio("backup")
         self._apply_global_theme(self.current_mode)
         self.protocol("WM_DELETE_WINDOW", self._on_close)
-
+    
     def _load_vector_icons(self):
         self.icon_backup = make_ui_icon("backup", (20, 20))
         self.icon_restore = make_ui_icon("restore", (20, 20))
