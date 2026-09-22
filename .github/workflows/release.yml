@@ -20,25 +20,38 @@ jobs:
           - os: windows-latest
             artifact_name: DroidVault-Studio-Windows-x64.zip
             build_script: |
-              curl --fail --location --retry 3 "https://github.com/Genymobile/scrcpy/releases/download/v3.3.3/scrcpy-win64-v3.3.3.zip" -o scrcpy-windows.zip
+              export SCRCPY_VERSION="4.1"
+              curl --fail --location --retry 3 \
+                "https://github.com/Genymobile/scrcpy/releases/download/v${SCRCPY_VERSION}/scrcpy-win64-v${SCRCPY_VERSION}.zip" \
+                -o scrcpy-windows.zip
+
               mkdir -p tools/windows
               unzip -q scrcpy-windows.zip -d tools/windows
-              find tools/windows -mindepth 1 -maxdepth 1 -type d -exec cp -R "{}/." tools/windows/ \;
-              find tools/windows -mindepth 1 -maxdepth 1 -type d -exec rm -rf "{}" \;
+
+              # flatten nested extracted dir if present
+              nested_dir="$(find tools/windows -mindepth 1 -maxdepth 1 -type d -print -quit || true)"
+              if [ -n "$nested_dir" ]; then
+                cp -R "$nested_dir"/. tools/windows/
+                rm -rf "$nested_dir"
+              fi
+
+              test -f tools/windows/adb.exe
+              test -f tools/windows/scrcpy.exe
+
+              # accept v4.1 server naming
+              find tools/windows -maxdepth 1 -type f -name 'scrcpy-server*'
+
               pip install pyinstaller pillow customtkinter
               pyinstaller DroidVault-Studio.spec
               pyi-archive_viewer --log-level ERROR dist/DroidVault-Studio.exe > archive.txt
 
-              # Normalize archive paths before checking them
               tr '\\' '/' < archive.txt > archive-normalized.txt
-
               grep -Fqi 'tools/windows/adb.exe' archive-normalized.txt
               grep -Fqi 'tools/windows/scrcpy.exe' archive-normalized.txt
-              grep -Fqi 'tools/windows/scrcpy-server' archive-normalized.txt
+              grep -Eqi 'tools/windows/scrcpy-server(-v[0-9.]+)?' archive-normalized.txt
 
               test -f tools/windows/adb.exe
               test -f tools/windows/scrcpy.exe
-              test -f tools/windows/scrcpy-server-v3.3.3
               mkdir -p bundle
               mv dist/DroidVault-Studio.exe bundle/
               cp -R tools bundle/
@@ -50,21 +63,28 @@ jobs:
             artifact_name: DroidVault-Studio-Linux-x64.tar.gz
             build_script: |
               sudo apt-get update && sudo apt-get install -y python3-tk binutils curl unzip
-              export SCRCPY_VERSION="3.3.3"
+              export SCRCPY_VERSION="4.1"
               mkdir -p tools/linux
+
               curl --fail --location --retry 3 "https://dl.google.com/android/repository/platform-tools-latest-linux.zip" -o /tmp/platform-tools.zip
               unzip -q /tmp/platform-tools.zip -d /tmp
               cp -R /tmp/platform-tools/. tools/linux/
-              curl --fail --location --retry 3 "https://github.com/Genymobile/scrcpy/releases/download/v${SCRCPY_VERSION}/scrcpy-linux-x86_64-v${SCRCPY_VERSION}.tar.gz" -o /tmp/scrcpy.tar.gz
+
+              curl --fail --location --retry 3 \
+                "https://github.com/Genymobile/scrcpy/releases/download/v${SCRCPY_VERSION}/scrcpy-linux-x86_64-v${SCRCPY_VERSION}.tar.gz" \
+                -o /tmp/scrcpy.tar.gz
               tar -xzf /tmp/scrcpy.tar.gz -C /tmp
               cp -R "/tmp/scrcpy-linux-x86_64-v${SCRCPY_VERSION}/." tools/linux/
+
               chmod +x tools/linux/adb tools/linux/scrcpy
               pip install pyinstaller pillow customtkinter
               pyinstaller DroidVault-Studio.spec
               pyi-archive_viewer --log-level ERROR dist/DroidVault-Studio > archive.txt
+
               grep -Fq "tools/linux/adb" archive.txt
               grep -Fq "tools/linux/scrcpy" archive.txt
-              grep -Fq "tools/linux/scrcpy-server" archive.txt
+              grep -Eqi 'tools/linux/scrcpy-server(-v[0-9.]+)?' archive.txt
+
               test -x tools/linux/adb
               test -x tools/linux/scrcpy
               mkdir -p bundle
