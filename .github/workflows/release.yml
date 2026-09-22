@@ -85,10 +85,7 @@ jobs:
               cp README.md bundle/
               cp LICENSE bundle/
               powershell -Command "Compress-Archive -Path 'bundle/*' -DestinationPath 'DroidVault-Studio-Windows-x64.zip'"
-              unzip -Z1 DroidVault-Studio-Windows-x64.zip | grep -Fx 'tools/windows/adb.exe'
-              unzip -Z1 DroidVault-Studio-Windows-x64.zip | grep -Fx 'tools/windows/scrcpy.exe'
-              unzip -Z1 DroidVault-Studio-Windows-x64.zip | grep -E '^tools/windows/scrcpy-server[^/]*$'
-              ! unzip -Z1 DroidVault-Studio-Windows-x64.zip | grep -E 'tools/windows/tools/windows|tools/windows/scrcpy-win64'
+              python -c "import zipfile; p='DroidVault-Studio-Windows-x64.zip'; names=set(zipfile.ZipFile(p).namelist()); required={'DroidVault-Studio.exe','tools/windows/adb.exe','tools/windows/scrcpy.exe'}; servers=[n for n in names if n.startswith('tools/windows/scrcpy-server') and '/' not in n[len('tools/windows/'):]]; unexpected=[n for n in names if 'tools/windows/tools/windows' in n or 'tools/windows/scrcpy-win64' in n]; missing=required-names; assert not missing, f'Missing archive entries: {sorted(missing)}'; assert servers, 'Missing tools/windows/scrcpy-server*'; assert not unexpected, f'Unexpected nested entries: {sorted(unexpected)}'"
 
           - os: ubuntu-latest
             artifact_name: DroidVault-Studio-Linux-x64.tar.gz
@@ -135,10 +132,7 @@ jobs:
               cp README.md bundle/
               cp LICENSE bundle/
               tar -czvf DroidVault-Studio-Linux-x64.tar.gz -C bundle .
-              tar -tzf DroidVault-Studio-Linux-x64.tar.gz | grep -Fx './tools/linux/adb'
-              tar -tzf DroidVault-Studio-Linux-x64.tar.gz | grep -Fx './tools/linux/scrcpy'
-              tar -tzf DroidVault-Studio-Linux-x64.tar.gz | grep -E '^\./tools/linux/scrcpy-server[^/]*$'
-              ! tar -tzf DroidVault-Studio-Linux-x64.tar.gz | grep -E 'tools/linux/tools/linux|tools/linux/scrcpy-linux'
+              python -c "import tarfile; p='DroidVault-Studio-Linux-x64.tar.gz'; names=set(tarfile.open(p).getnames()); required={'./DroidVault-Studio','./tools/linux/adb','./tools/linux/scrcpy'}; servers=[n for n in names if n.startswith('./tools/linux/scrcpy-server') and '/' not in n[len('./tools/linux/'):]]; unexpected=[n for n in names if 'tools/linux/tools/linux' in n or 'tools/linux/scrcpy-linux' in n]; missing=required-names; assert not missing, f'Missing archive entries: {sorted(missing)}'; assert servers, 'Missing tools/linux/scrcpy-server*'; assert not unexpected, f'Unexpected nested entries: {sorted(unexpected)}'"
 
     steps:
       - name: Checkout Repository
