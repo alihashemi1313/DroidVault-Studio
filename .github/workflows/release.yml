@@ -24,6 +24,11 @@ jobs:
               curl --fail --location --retry 3 \
                 "https://github.com/Genymobile/scrcpy/releases/download/v${SCRCPY_VERSION}/scrcpy-win64-v${SCRCPY_VERSION}.zip" \
                 -o scrcpy-windows.zip
+              test -n "${SCRCPY_WINDOWS_SHA256:-}" || {
+                echo "::error::SCRCPY_WINDOWS_SHA256 repository variable is required"
+                exit 1
+              }
+              echo "${SCRCPY_WINDOWS_SHA256}  scrcpy-windows.zip" | sha256sum --check --strict
 
               mkdir -p tools/windows
               unzip -q scrcpy-windows.zip -d tools/windows
@@ -55,12 +60,38 @@ jobs:
                 exit 1
               }
 
+              test "${WINDOWS_SIGNING_ENABLED:-false}" = "true" || {
+                echo "::error::Windows release signing must be enabled"
+                exit 1
+              }
+              test -n "${WINDOWS_SIGNING_CERTIFICATE:-}" || {
+                echo "::error::Windows signing certificate is missing"
+                exit 1
+              }
+              test -n "${WINDOWS_SIGNING_CERTIFICATE_PASSWORD:-}" || {
+                echo "::error::Windows signing certificate password is missing"
+                exit 1
+              }
+              printf '%s' "$WINDOWS_SIGNING_CERTIFICATE" | base64 --decode > signing-cert.pfx
+              signtool="$(find '/c/Program Files (x86)/Windows Kits' -type f -name signtool.exe -print -quit 2>/dev/null || true)"
+              test -n "$signtool" || {
+                echo "::error::signtool.exe is unavailable"
+                exit 1
+              }
+              export SIGNTOOL_PATH="$signtool"
+              powershell -NoProfile -Command '& $env:SIGNTOOL_PATH sign /fd SHA256 /f signing-cert.pfx /p $env:WINDOWS_SIGNING_CERTIFICATE_PASSWORD /tr http://timestamp.digicert.com /td SHA256 dist/DroidVault-Studio.exe'
+              powershell -NoProfile -Command '& $env:SIGNTOOL_PATH verify /pa /all dist/DroidVault-Studio.exe'
+
               mkdir -p bundle
               mv dist/DroidVault-Studio.exe bundle/
               cp -R tools bundle/
               cp README.md bundle/
               cp LICENSE bundle/
               powershell -Command "Compress-Archive -Path 'bundle/*' -DestinationPath 'DroidVault-Studio-Windows-x64.zip'"
+              unzip -Z1 DroidVault-Studio-Windows-x64.zip | grep -Fx 'tools/windows/adb.exe'
+              unzip -Z1 DroidVault-Studio-Windows-x64.zip | grep -Fx 'tools/windows/scrcpy.exe'
+              unzip -Z1 DroidVault-Studio-Windows-x64.zip | grep -E '^tools/windows/scrcpy-server[^/]*$'
+              ! unzip -Z1 DroidVault-Studio-Windows-x64.zip | grep -E 'tools/windows/tools/windows|tools/windows/scrcpy-win64'
 
           - os: ubuntu-latest
             artifact_name: DroidVault-Studio-Linux-x64.tar.gz
@@ -69,15 +100,25 @@ jobs:
               export SCRCPY_VERSION="4.1"
               mkdir -p tools/linux
 
-              curl --fail --location --retry 3 "https://dl.google.com/android/repository/platform-tools-latest-linux.zip" -o /tmp/platform-tools.zip
-              unzip -q /tmp/platform-tools.zip -d /tmp
-              cp -R /tmp/platform-tools/. tools/linux/
+              curl --fail --location --retry 3 "https://dl.google.com/android/repository/platform-tools_r35.0.2-linux.zip" -o platform-tools.zip
+              test -n "${PLATFORM_TOOLS_LINUX_SHA256:-}" || {
+                echo "::error::PLATFORM_TOOLS_LINUX_SHA256 repository variable is required"
+                exit 1
+              }
+              echo "${PLATFORM_TOOLS_LINUX_SHA256}  platform-tools.zip" | sha256sum --check --strict
+              unzip -q platform-tools.zip -d platform-tools-extracted
+              cp -R platform-tools-extracted/platform-tools/. tools/linux/
 
               curl --fail --location --retry 3 \
                 "https://github.com/Genymobile/scrcpy/releases/download/v${SCRCPY_VERSION}/scrcpy-linux-x86_64-v${SCRCPY_VERSION}.tar.gz" \
-                -o /tmp/scrcpy.tar.gz
-              tar -xzf /tmp/scrcpy.tar.gz -C /tmp
-              cp -R "/tmp/scrcpy-linux-x86_64-v${SCRCPY_VERSION}/." tools/linux/
+                -o scrcpy-linux.tar.gz
+              test -n "${SCRCPY_LINUX_SHA256:-}" || {
+                echo "::error::SCRCPY_LINUX_SHA256 repository variable is required"
+                exit 1
+              }
+              echo "${SCRCPY_LINUX_SHA256}  scrcpy-linux.tar.gz" | sha256sum --check --strict
+              tar -xzf scrcpy-linux.tar.gz
+              cp -R "scrcpy-linux-x86_64-v${SCRCPY_VERSION}/." tools/linux/
 
               chmod +x tools/linux/adb tools/linux/scrcpy
               pip install pyinstaller pillow customtkinter
@@ -102,6 +143,10 @@ jobs:
               cp README.md bundle/
               cp LICENSE bundle/
               tar -czvf DroidVault-Studio-Linux-x64.tar.gz -C bundle .
+              tar -tzf DroidVault-Studio-Linux-x64.tar.gz | grep -Fx './tools/linux/adb'
+              tar -tzf DroidVault-Studio-Linux-x64.tar.gz | grep -Fx './tools/linux/scrcpy'
+              tar -tzf DroidVault-Studio-Linux-x64.tar.gz | grep -E '^\./tools/linux/scrcpy-server[^/]*$'
+              ! tar -tzf DroidVault-Studio-Linux-x64.tar.gz | grep -E 'tools/linux/tools/linux|tools/linux/scrcpy-linux'
 
     steps:
       - name: Checkout Repository
@@ -114,6 +159,13 @@ jobs:
 
       - name: Compile Standalone Executable
         shell: bash
+        env:
+          SCRCPY_WINDOWS_SHA256: ${{ vars.SCRCPY_WINDOWS_SHA256 }}
+          SCRCPY_LINUX_SHA256: ${{ vars.SCRCPY_LINUX_SHA256 }}
+          PLATFORM_TOOLS_LINUX_SHA256: ${{ vars.PLATFORM_TOOLS_LINUX_SHA256 }}
+          WINDOWS_SIGNING_ENABLED: ${{ vars.WINDOWS_SIGNING_ENABLED }}
+          WINDOWS_SIGNING_CERTIFICATE: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE }}
+          WINDOWS_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PASSWORD }}
         run: ${{ matrix.build_script }}
 
       - name: Compute SHA-256 Checksum
@@ -146,9 +198,13 @@ jobs:
       - name: Combine Checksums
         run: |
           cd release_assets
+          test -f DroidVault-Studio-Windows-x64.zip
+          test -f DroidVault-Studio-Linux-x64.tar.gz
           cat *.sha256 > SHA256SUMS.txt
+          sha256sum --check --strict SHA256SUMS.txt
           rm -f *.sha256
-          ls -la
+          test -s SHA256SUMS.txt
+          find . -maxdepth 1 -type f -printf '%f\n' | sort
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

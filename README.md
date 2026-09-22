@@ -101,6 +101,20 @@ Download the latest standalone package directly from [Releases](https://github.c
 - **Windows 10 / 11:** Download `DroidVault-Studio-v2.5-Windows-x64.zip`, extract it anywhere, and launch `DroidVault-Studio.exe`. (ADB, Scrcpy, and all GUI runtimes are bundled).
 - **Linux:** Download `DroidVault-Studio-v2.5-Linux-x64.tar.gz`, extract it, and run `./DroidVault-Studio` (ADB and Scrcpy are bundled).
 
+Release archives include `SHA256SUMS.txt`; verify it with `sha256sum --check SHA256SUMS.txt`
+before running an archive. Release builds pin the third-party tool versions and verify their
+SHA-256 digests in CI. Windows releases require Authenticode signing; the workflow fails
+before packaging if signing is not enabled or the release signing secrets are unavailable.
+Linux releases use checksum verification only (no signing key is currently configured by
+this workflow).
+
+Maintainers must configure the repository variables `SCRCPY_WINDOWS_SHA256`,
+`SCRCPY_LINUX_SHA256`, and `PLATFORM_TOOLS_LINUX_SHA256` with the published
+SHA-256 values for the pinned downloads before dispatching a release build.
+For Windows Authenticode signing, set `WINDOWS_SIGNING_ENABLED` to `true` and provide the
+base64-encoded PFX in `WINDOWS_SIGNING_CERTIFICATE` plus its password in
+`WINDOWS_SIGNING_CERTIFICATE_PASSWORD`. The private key must never be committed.
+
 ---
 
 ### 🛠️ Method 2: Run from Source (Developers)

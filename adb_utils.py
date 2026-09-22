@@ -50,8 +50,6 @@ def _bundled_tool_dirs(platform_name=None, script_dir=None):
         os.path.join(script_dir, "tools", platform_name),
         os.path.join(script_dir, "platform-tools"),
     ]
-    if platform_name == "windows":
-        dirs.append(os.path.join(script_dir, "scrcpy-win64-v4.1"))
     return tuple(dirs)
 
 

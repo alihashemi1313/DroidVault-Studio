@@ -22,7 +22,7 @@ class TestBundledToolDiscovery(unittest.TestCase):
 
         self.assertEqual(windows_dirs[0], os.path.join(root, "tools", "windows"))
         self.assertEqual(windows_dirs[1], os.path.join(root, "platform-tools"))
-        self.assertIn("scrcpy-win64-v4.1", windows_dirs[-1])
+        self.assertNotIn("scrcpy-win64-v4.1", windows_dirs)
         self.assertEqual(linux_dirs[0], os.path.join(root, "tools", "linux"))
         self.assertNotIn("scrcpy-win64-v4.1", linux_dirs)
 

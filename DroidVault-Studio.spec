@@ -7,9 +7,14 @@ datas = [('app_icon.ico', '.'), ('app_icon.png', '.')]
 platform_name = 'windows' if os.name == 'nt' else 'linux'
 platform_tools = os.path.join('tools', platform_name)
 if os.path.isdir(platform_tools):
-    datas.append((platform_tools, os.path.join('tools', platform_name)))
-elif platform_name == 'windows' and os.path.isdir('scrcpy-win64-v4.1'):
-    datas.append(('scrcpy-win64-v4.1', os.path.join('tools', 'windows')))
+    # Add files individually so PyInstaller preserves the intended layout and
+    # never creates tools/<platform>/tools/<platform> when given a directory.
+    for root, _, files in os.walk(platform_tools):
+        for filename in files:
+            source = os.path.join(root, filename)
+            relative = os.path.relpath(source, platform_tools)
+            destination = os.path.join('tools', platform_name, os.path.dirname(relative))
+            datas.append((source, destination))
 binaries = []
 hiddenimports = []
 tmp_ret = collect_all('customtkinter')
@@ -41,7 +46,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
