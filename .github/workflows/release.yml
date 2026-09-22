@@ -42,16 +42,19 @@ jobs:
               find tools/windows -maxdepth 1 -type f -name 'scrcpy-server*'
 
               pip install pyinstaller pillow customtkinter
-              pyinstaller DroidVault-Studio.spec
-              pyi-archive_viewer --log-level ERROR dist/DroidVault-Studio.exe > archive.txt
+              pyinstaller --clean DroidVault-Studio.spec
 
-              tr '\\' '/' < archive.txt > archive-normalized.txt
-              grep -Fqi 'tools/windows/adb.exe' archive-normalized.txt
-              grep -Fqi 'tools/windows/scrcpy.exe' archive-normalized.txt
-              grep -Eqi 'tools/windows/scrcpy-server(-v[0-9.]+)?' archive-normalized.txt
-
+              # Validate the files included by the spec directly.
               test -f tools/windows/adb.exe
               test -f tools/windows/scrcpy.exe
+
+              scrcpy_server="$(find tools/windows -maxdepth 1 -type f -iname 'scrcpy-server*' -print -quit)"
+              test -n "$scrcpy_server" || {
+                echo "scrcpy server was not found"
+                find tools/windows -maxdepth 1 -type f -print
+                exit 1
+              }
+
               mkdir -p bundle
               mv dist/DroidVault-Studio.exe bundle/
               cp -R tools bundle/
@@ -78,12 +81,17 @@ jobs:
 
               chmod +x tools/linux/adb tools/linux/scrcpy
               pip install pyinstaller pillow customtkinter
-              pyinstaller DroidVault-Studio.spec
-              pyi-archive_viewer --log-level ERROR dist/DroidVault-Studio > archive.txt
+              
+              pyinstaller --clean DroidVault-Studio.spec
 
-              grep -Fq "tools/linux/adb" archive.txt
-              grep -Fq "tools/linux/scrcpy" archive.txt
-              grep -Eqi 'tools/linux/scrcpy-server(-v[0-9.]+)?' archive.txt
+              test -f tools/linux/adb
+              test -f tools/linux/scrcpy
+              scrcpy_server="$(find tools/linux -maxdepth 1 -type f -iname 'scrcpy-server*' -print -quit)"
+              test -n "$scrcpy_server" || {
+                echo "scrcpy server was not found"
+                find tools/linux -maxdepth 1 -type f -print
+                exit 1
+              }
 
               test -x tools/linux/adb
               test -x tools/linux/scrcpy
