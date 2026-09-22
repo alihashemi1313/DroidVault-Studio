@@ -102,15 +102,17 @@ Download the latest standalone package directly from [Releases](https://github.c
 - **Linux:** Download `DroidVault-Studio-v2.5-Linux-x64.tar.gz`, extract it, and run `./DroidVault-Studio` (ADB and Scrcpy are bundled).
 
 Release archives include `SHA256SUMS.txt`; verify it with `sha256sum --check SHA256SUMS.txt`
-before running an archive. Release builds pin the third-party tool versions and verify their
-SHA-256 digests in CI. Windows releases require Authenticode signing; the workflow fails
-before packaging if signing is not enabled or the release signing secrets are unavailable.
+before running an archive. Release builds pin scrcpy and verify its SHA-256 digest in CI;
+the Google platform-tools archive is fetched from the official endpoint and its digest is
+logged. Windows releases support Authenticode signing; the workflow fails if signing is
+enabled but the release signing secrets are unavailable.
 Linux releases use checksum verification only (no signing key is currently configured by
 this workflow).
 
-Maintainers must configure the repository variables `SCRCPY_WINDOWS_SHA256`,
-`SCRCPY_LINUX_SHA256`, and `PLATFORM_TOOLS_LINUX_SHA256` with the published
-SHA-256 values for the pinned downloads before dispatching a release build.
+The scrcpy release digests are pinned in the workflow; optional repository variables
+`SCRCPY_WINDOWS_SHA256` and `SCRCPY_LINUX_SHA256` may override them when upstream releases
+are intentionally replaced. The Linux platform-tools archive is downloaded from Google's
+official latest endpoint and its SHA-256 is printed in the build log for auditability.
 For Windows Authenticode signing, set `WINDOWS_SIGNING_ENABLED` to `true` and provide the
 base64-encoded PFX in `WINDOWS_SIGNING_CERTIFICATE` plus its password in
 `WINDOWS_SIGNING_CERTIFICATE_PASSWORD`. The private key must never be committed.
