@@ -73,10 +73,10 @@
 |---|---|
 | 🐍 Python | 3.9 or newer |
 | 📦 Python packages | `customtkinter`, `Pillow` (install below) |
-| 🔌 ADB | Android Platform Tools, Bundled with Windows release; Linux users need adb in PATH |
+| 🔌 ADB | Android Platform Tools, bundled in both Windows and Linux releases |
 | 📱 Android device | Non-root for general tasks | Rooted (Magisk / KernelSU) for /data/data backups |
 | 🔗 Connection | USB cable (with USB debugging authorized) or Wireless ADB |
-| 🖱️ Optional | [scrcpy](https://github.com/Genymobile/scrcpy) , for the Mirror Screen button, Bundled with Windows release; optional on Linux |
+| 🖱️ Optional | [scrcpy](https://github.com/Genymobile/scrcpy), for the Mirror Screen button; bundled in both releases |
 
 <details>
 <summary>🐧 Linux users — one extra step</summary>
@@ -99,7 +99,7 @@ sudo dnf install python3-tkinter # Fedora
 Download the latest standalone package directly from [Releases](https://github.com/alihashemi1313/DroidVault-Studio/releases/latest):
 
 - **Windows 10 / 11:** Download `DroidVault-Studio-v2.5-Windows-x64.zip`, extract it anywhere, and launch `DroidVault-Studio.exe`. (ADB, Scrcpy, and all GUI runtimes are bundled).
-- **Linux:** Download `DroidVault-Studio-v2.5-Linux-x64.tar.gz`, extract it, and run `./DroidVault-Studio` (ensure `adb` and `scrcpy` are installed via your package manager).
+- **Linux:** Download `DroidVault-Studio-v2.5-Linux-x64.tar.gz`, extract it, and run `./DroidVault-Studio` (ADB and Scrcpy are bundled).
 
 ---
 
@@ -114,6 +114,8 @@ Download the latest standalone package directly from [Releases](https://github.c
    ```bash
    pip install -r requirements.txt
    ```
+   Source execution uses `tools/<platform>/` when present and otherwise falls back to
+   native `adb`/`scrcpy` commands available on your PATH.
 3. Run the application:
    ```bash
    python main.py

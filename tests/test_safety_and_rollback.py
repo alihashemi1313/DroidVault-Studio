@@ -14,6 +14,19 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 import adb_utils as adbu
 
 
+class TestBundledToolDiscovery(unittest.TestCase):
+    def test_platform_tool_directories_are_native_and_ordered(self):
+        root = os.path.join("C:\\", "droidvault-test")
+        windows_dirs = adbu._bundled_tool_dirs("windows", root)
+        linux_dirs = adbu._bundled_tool_dirs("linux", root)
+
+        self.assertEqual(windows_dirs[0], os.path.join(root, "tools", "windows"))
+        self.assertEqual(windows_dirs[1], os.path.join(root, "platform-tools"))
+        self.assertIn("scrcpy-win64-v4.1", windows_dirs[-1])
+        self.assertEqual(linux_dirs[0], os.path.join(root, "tools", "linux"))
+        self.assertNotIn("scrcpy-win64-v4.1", linux_dirs)
+
+
 class TestSecurityAndPathValidation(unittest.TestCase):
     """File name validation test against path traversal attacks"""
 

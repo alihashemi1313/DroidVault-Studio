@@ -42,6 +42,18 @@ _FOUND_SCRCPY = None
 _FOUND_ADB = None
 
 
+def _bundled_tool_dirs(platform_name=None, script_dir=None):
+    platform_name = platform_name or ("windows" if sys.platform.startswith("win") else "linux")
+    script_dir = script_dir or SCRIPT_DIR
+    dirs = [
+        os.path.join(script_dir, "tools", platform_name),
+        os.path.join(script_dir, "platform-tools"),
+    ]
+    if platform_name == "windows":
+        dirs.append(os.path.join(script_dir, "scrcpy-win64-v4.1"))
+    return tuple(dirs)
+
+
 def _find_scrcpy_and_adb():
     global ADB_PATH, SCRCPY_PATH, _FOUND_SCRCPY, _FOUND_ADB
 
@@ -53,11 +65,7 @@ def _find_scrcpy_and_adb():
     found_adb_path = None
 
     # 1. Checking local paths relative to the executable or PyInstaller bundle
-    candidate_dirs = [
-        SCRIPT_DIR,
-        os.path.join(SCRIPT_DIR, "scrcpy-win64-v4.1"),
-        os.path.join(SCRIPT_DIR, "platform-tools"),
-    ]
+    candidate_dirs = [SCRIPT_DIR] + list(_bundled_tool_dirs())
 
     for d in candidate_dirs:
         adb_candidate = os.path.join(d, adb_bin)

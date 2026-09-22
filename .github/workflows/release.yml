@@ -21,7 +21,9 @@ jobs:
             artifact_name: DroidVault-Studio-Windows-x64.zip
             build_script: |
               pip install pyinstaller pillow customtkinter
-              pyinstaller --noconsole --onefile --icon="app_icon.ico" --add-data "app_icon.png;." --add-data "app_icon.ico;." --collect-all customtkinter --collect-all PIL main.py --name "DroidVault-Studio"
+              mkdir -p tools/windows
+              cp -R scrcpy-win64-v4.1/. tools/windows/
+              pyinstaller --noconsole --onefile DroidVault-Studio.spec
               mkdir -p bundle
               mv dist/DroidVault-Studio.exe bundle/
               cp README.md bundle/
@@ -31,9 +33,18 @@ jobs:
           - os: ubuntu-latest
             artifact_name: DroidVault-Studio-Linux-x64.tar.gz
             build_script: |
-              sudo apt-get update && sudo apt-get install -y python3-tk binutils
+              sudo apt-get update && sudo apt-get install -y python3-tk binutils curl unzip
+              export SCRCPY_VERSION="3.3.3"
+              mkdir -p tools/linux
+              curl --fail --location --retry 3 "https://dl.google.com/android/repository/platform-tools-latest-linux.zip" -o /tmp/platform-tools.zip
+              unzip -q /tmp/platform-tools.zip -d /tmp
+              cp -R /tmp/platform-tools/. tools/linux/
+              curl --fail --location --retry 3 "https://github.com/Genymobile/scrcpy/releases/download/v${SCRCPY_VERSION}/scrcpy-linux-x86_64-v${SCRCPY_VERSION}.tar.gz" -o /tmp/scrcpy.tar.gz
+              tar -xzf /tmp/scrcpy.tar.gz -C /tmp
+              cp -R "/tmp/scrcpy-linux-x86_64-v${SCRCPY_VERSION}/." tools/linux/
+              chmod +x tools/linux/adb tools/linux/scrcpy
               pip install pyinstaller pillow customtkinter
-              pyinstaller --noconsole --onefile --add-data "app_icon.png:." --collect-all customtkinter --collect-all PIL --hidden-import "PIL._tkinter_finder" main.py --name "DroidVault-Studio"
+              pyinstaller --noconsole --onefile DroidVault-Studio.spec
               mkdir -p bundle
               chmod +x dist/DroidVault-Studio
               cp dist/DroidVault-Studio bundle/
