@@ -26,6 +26,13 @@ class TestBundledToolDiscovery(unittest.TestCase):
         self.assertEqual(linux_dirs[0], os.path.join(root, "tools", "linux"))
         self.assertNotIn("scrcpy-win64-v4.1", linux_dirs)
 
+    @patch.object(adbu, "SCRIPT_DIR", os.path.join("C:\\", "droidvault", "_MEI"))
+    @patch.object(adbu, "EXECUTABLE_DIR", os.path.join("C:\\", "droidvault"))
+    @patch.object(adbu.sys, "frozen", True, create=True)
+    def test_frozen_runtime_checks_external_tools_next_to_executable(self):
+        dirs = adbu._runtime_tool_dirs("windows")
+        self.assertEqual(dirs[0], os.path.join("C:\\", "droidvault", "tools", "windows"))
+
 
 class TestSecurityAndPathValidation(unittest.TestCase):
     """File name validation test against path traversal attacks"""

@@ -24,8 +24,15 @@ jobs:
               mkdir -p tools/windows
               cp -R scrcpy-win64-v4.1/. tools/windows/
               pyinstaller --noconsole --onefile DroidVault-Studio.spec
+              pyi-archive_viewer --log-level ERROR dist/DroidVault-Studio.exe > archive.txt
+              grep -q 'tools\\windows\\adb.exe' archive.txt
+              grep -q 'tools\\windows\\scrcpy.exe' archive.txt
+              grep -q 'tools\\windows\\scrcpy-server' archive.txt
+              test -f tools/windows/adb.exe
+              test -f tools/windows/scrcpy.exe
               mkdir -p bundle
               mv dist/DroidVault-Studio.exe bundle/
+              cp -R tools bundle/
               cp README.md bundle/
               cp LICENSE bundle/
               powershell -Command "Compress-Archive -Path 'bundle/*' -DestinationPath 'DroidVault-Studio-Windows-x64.zip'"
@@ -45,9 +52,16 @@ jobs:
               chmod +x tools/linux/adb tools/linux/scrcpy
               pip install pyinstaller pillow customtkinter
               pyinstaller --noconsole --onefile DroidVault-Studio.spec
+              pyi-archive_viewer --log-level ERROR dist/DroidVault-Studio > archive.txt
+              grep -q 'tools/linux/adb' archive.txt
+              grep -q 'tools/linux/scrcpy' archive.txt
+              grep -q 'tools/linux/scrcpy-server' archive.txt
+              test -x tools/linux/adb
+              test -x tools/linux/scrcpy
               mkdir -p bundle
               chmod +x dist/DroidVault-Studio
               cp dist/DroidVault-Studio bundle/
+              cp -R tools bundle/
               cp README.md bundle/
               cp LICENSE bundle/
               tar -czvf DroidVault-Studio-Linux-x64.tar.gz -C bundle .

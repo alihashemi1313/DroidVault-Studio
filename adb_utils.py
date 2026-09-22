@@ -5,6 +5,7 @@ if getattr(sys, "frozen", False):
     SCRIPT_DIR = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
 else:
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+EXECUTABLE_DIR = os.path.dirname(os.path.abspath(sys.executable))
 
 import hashlib
 import io
@@ -54,6 +55,14 @@ def _bundled_tool_dirs(platform_name=None, script_dir=None):
     return tuple(dirs)
 
 
+def _runtime_tool_dirs(platform_name=None):
+    dirs = []
+    if getattr(sys, "frozen", False) and EXECUTABLE_DIR != SCRIPT_DIR:
+        dirs.extend(_bundled_tool_dirs(platform_name, EXECUTABLE_DIR))
+    dirs.extend(_bundled_tool_dirs(platform_name, SCRIPT_DIR))
+    return tuple(dict.fromkeys(dirs))
+
+
 def _find_scrcpy_and_adb():
     global ADB_PATH, SCRCPY_PATH, _FOUND_SCRCPY, _FOUND_ADB
 
@@ -65,7 +74,7 @@ def _find_scrcpy_and_adb():
     found_adb_path = None
 
     # 1. Checking local paths relative to the executable or PyInstaller bundle
-    candidate_dirs = [SCRIPT_DIR] + list(_bundled_tool_dirs())
+    candidate_dirs = [SCRIPT_DIR] + list(_runtime_tool_dirs())
 
     for d in candidate_dirs:
         adb_candidate = os.path.join(d, adb_bin)
