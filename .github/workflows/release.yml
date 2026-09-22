@@ -20,10 +20,13 @@ jobs:
           - os: windows-latest
             artifact_name: DroidVault-Studio-Windows-x64.zip
             build_script: |
-              pip install pyinstaller pillow customtkinter
+              curl --fail --location --retry 3 "https://github.com/Genymobile/scrcpy/releases/download/v3.3.3/scrcpy-win64-v3.3.3.zip" -o scrcpy-windows.zip
               mkdir -p tools/windows
-              cp -R scrcpy-win64-v4.1/. tools/windows/
-              pyinstaller --noconsole --onefile DroidVault-Studio.spec
+              unzip -q scrcpy-windows.zip -d tools/windows
+              find tools/windows -mindepth 1 -maxdepth 1 -type d -exec cp -R "{}/." tools/windows/ \;
+              find tools/windows -mindepth 1 -maxdepth 1 -type d -exec rm -rf "{}" \;
+              pip install pyinstaller pillow customtkinter
+              pyinstaller DroidVault-Studio.spec
               pyi-archive_viewer --log-level ERROR dist/DroidVault-Studio.exe > archive.txt
               grep -q 'tools\\windows\\adb.exe' archive.txt
               grep -q 'tools\\windows\\scrcpy.exe' archive.txt
@@ -51,7 +54,7 @@ jobs:
               cp -R "/tmp/scrcpy-linux-x86_64-v${SCRCPY_VERSION}/." tools/linux/
               chmod +x tools/linux/adb tools/linux/scrcpy
               pip install pyinstaller pillow customtkinter
-              pyinstaller --noconsole --onefile DroidVault-Studio.spec
+              pyinstaller DroidVault-Studio.spec
               pyi-archive_viewer --log-level ERROR dist/DroidVault-Studio > archive.txt
               grep -q 'tools/linux/adb' archive.txt
               grep -q 'tools/linux/scrcpy' archive.txt
