@@ -28,9 +28,9 @@ jobs:
               pip install pyinstaller pillow customtkinter
               pyinstaller DroidVault-Studio.spec
               pyi-archive_viewer --log-level ERROR dist/DroidVault-Studio.exe > archive.txt
-              grep -q 'tools\\windows\\adb.exe' archive.txt
-              grep -q 'tools\\windows\\scrcpy.exe' archive.txt
-              grep -q 'tools\\windows\\scrcpy-server' archive.txt
+              grep -Fq 'tools\windows\adb.exe' archive.txt
+              grep -Fq 'tools\windows\scrcpy.exe' archive.txt
+              grep -Fq 'tools\windows\scrcpy-server' archive.txt
               test -f tools/windows/adb.exe
               test -f tools/windows/scrcpy.exe
               mkdir -p bundle
@@ -56,9 +56,9 @@ jobs:
               pip install pyinstaller pillow customtkinter
               pyinstaller DroidVault-Studio.spec
               pyi-archive_viewer --log-level ERROR dist/DroidVault-Studio > archive.txt
-              grep -q 'tools/linux/adb' archive.txt
-              grep -q 'tools/linux/scrcpy' archive.txt
-              grep -q 'tools/linux/scrcpy-server' archive.txt
+              grep -Fq "tools/linux/adb" archive.txt
+              grep -Fq "tools/linux/scrcpy" archive.txt
+              grep -Fq "tools/linux/scrcpy-server" archive.txt
               test -x tools/linux/adb
               test -x tools/linux/scrcpy
               mkdir -p bundle
